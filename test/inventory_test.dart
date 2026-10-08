@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:inventory/l10n/app_localizations.dart';
 import 'package:inventory/models/inventory_node.dart';
 
 void main() {
@@ -145,6 +147,28 @@ void main() {
       // Exportación limpia omite la ruta local de la foto
       final exportJson = nodeWithImage.toJson(forExport: true);
       expect(exportJson.containsKey('imagePath'), isFalse);
+    });
+
+    test('AppLocalizations supports English, Spanish, and French', () {
+      final locEn = AppLocalizations(const Locale('en'));
+      final locEs = AppLocalizations(const Locale('es'));
+      final locFr = AppLocalizations(const Locale('fr'));
+
+      expect(locEn.appTitle, 'Inventory');
+      expect(locEs.appTitle, 'Inventario');
+      expect(locFr.appTitle, 'Inventaire');
+
+      expect(locEn.places, 'Places');
+      expect(locEs.places, 'Lugares');
+      expect(locFr.places, 'Lieux');
+
+      expect(locEn.favourites, 'Favourites');
+      expect(locEs.favourites, 'Favoritos');
+      expect(locFr.favourites, 'Favoris');
+
+      expect(locEn.storagesCount(3), '3 storages');
+      expect(locEs.storagesCount(3), '3 almacenes');
+      expect(locFr.storagesCount(3), '3 rangements');
     });
   });
 }

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/app_theme.dart';
 import '../../models/inventory_node.dart';
 
@@ -10,6 +11,7 @@ Future<void> showImagePickerSheet(
   VoidCallback? onRemove,
   bool hasExistingImage = false,
 }) {
+  final l10n = AppLocalizations.of(context);
   return showModalBottomSheet(
     context: context,
     backgroundColor: AppTheme.darkSurface,
@@ -22,9 +24,9 @@ Future<void> showImagePickerSheet(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Seleccionar imagen',
-              style: TextStyle(
+            Text(
+              l10n.coverImage,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -40,7 +42,7 @@ Future<void> showImagePickerSheet(
                 ),
                 child: const Icon(Icons.photo_camera, color: AppTheme.lavenderText),
               ),
-              title: const Text('Hacer foto con la cámara'),
+              title: Text(l10n.takePhotoCamera),
               onTap: () {
                 Navigator.pop(ctx);
                 onSelectSource(ImageSource.camera);
@@ -55,7 +57,7 @@ Future<void> showImagePickerSheet(
                 ),
                 child: const Icon(Icons.photo_library, color: AppTheme.lavenderText),
               ),
-              title: const Text('Elegir de la galería'),
+              title: Text(l10n.chooseFromGallery),
               onTap: () {
                 Navigator.pop(ctx);
                 onSelectSource(ImageSource.gallery);
@@ -71,8 +73,8 @@ Future<void> showImagePickerSheet(
                   ),
                   child: const Icon(Icons.delete_outline, color: Colors.redAccent),
                 ),
-                title: const Text('Eliminar foto actual',
-                    style: TextStyle(color: Colors.redAccent)),
+                title: Text(l10n.removePhoto,
+                    style: const TextStyle(color: Colors.redAccent)),
                 onTap: () {
                   Navigator.pop(ctx);
                   onRemove();
@@ -406,7 +408,9 @@ class NodeBannerWithImage extends StatelessWidget {
                   size: 20,
                   color: Colors.white,
                 ),
-                tooltip: hasImage ? 'Cambiar foto' : 'Añadir foto',
+                tooltip: hasImage
+                    ? AppLocalizations.of(context).changePhoto
+                    : AppLocalizations.of(context).coverImage,
                 onPressed: onPickImage,
               ),
             ),

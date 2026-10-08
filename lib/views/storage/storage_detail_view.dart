@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/inventory_node.dart';
 import '../../services/image_storage_service.dart';
 import '../../services/inventory_storage_service.dart';
@@ -76,11 +77,11 @@ class _StorageDetailViewState extends State<StorageDetailView> {
 
   Future<void> _moveNode() async {
     if (_node == null) return;
+    final l10n = AppLocalizations.of(context);
     final tree = await _service.loadTree();
     final storages = <InventoryNode>[];
 
     void collectContainers(InventoryNode n) {
-      // Un contenedor no se puede mover dentro de sí mismo ni de sus descendientes
       if (n.id == _node!.id) return;
       if (n.isPlace || n.isStorage) {
         storages.add(n);
@@ -100,7 +101,7 @@ class _StorageDetailViewState extends State<StorageDetailView> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.darkSurface,
-        title: const Text('Mover a...', style: TextStyle(color: Colors.white)),
+        title: Text(l10n.selectContainer, style: const TextStyle(color: Colors.white)),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -111,7 +112,7 @@ class _StorageDetailViewState extends State<StorageDetailView> {
                 final isCurrent = _node!.parentId == null;
                 return ListTile(
                   leading: const Icon(Icons.home, color: AppTheme.lavenderText),
-                  title: const Text('🏠 Raíz principal', style: TextStyle(color: Colors.white)),
+                  title: Text('🏠 ${l10n.rootLevel}', style: const TextStyle(color: Colors.white)),
                   trailing: isCurrent ? const Icon(Icons.check, color: AppTheme.lavenderText) : null,
                   onTap: () => Navigator.pop(ctx, ''),
                 );
@@ -131,7 +132,7 @@ class _StorageDetailViewState extends State<StorageDetailView> {
                   ),
                 ),
                 subtitle: Text(
-                  s.isPlace ? 'Lugar' : 'Almacén',
+                  s.isPlace ? l10n.place : l10n.storage,
                   style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
                 ),
                 trailing: isCurrent ? const Icon(Icons.check, color: AppTheme.lavenderText) : null,
@@ -143,7 +144,7 @@ class _StorageDetailViewState extends State<StorageDetailView> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar', style: TextStyle(color: AppTheme.lavenderText)),
+            child: Text(l10n.cancel, style: const TextStyle(color: AppTheme.lavenderText)),
           ),
         ],
       ),
@@ -160,23 +161,24 @@ class _StorageDetailViewState extends State<StorageDetailView> {
 
   Future<void> _deleteNode() async {
     if (_node == null) return;
+    final l10n = AppLocalizations.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.darkSurface,
-        title: Text('¿Eliminar ${_node!.name}?', style: const TextStyle(color: Colors.white)),
+        title: Text(l10n.deleteConfirmTitle, style: const TextStyle(color: Colors.white)),
         content: Text(
-          'Se eliminará este contenedor y todos sus sub-almacenes y objetos interiores (${_node!.totalNestedItemsCount} objetos).',
+          l10n.deleteConfirmMessage(_node!.name),
           style: const TextStyle(color: AppTheme.textMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar', style: TextStyle(color: AppTheme.lavenderText)),
+            child: Text(l10n.cancel, style: const TextStyle(color: AppTheme.lavenderText)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Eliminar', style: TextStyle(color: Colors.redAccent)),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -237,6 +239,8 @@ class _StorageDetailViewState extends State<StorageDetailView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     if (_isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -245,16 +249,16 @@ class _StorageDetailViewState extends State<StorageDetailView> {
 
     if (_node == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Almacén')),
-        body: const Center(
-          child: Text('El contenedor ya no existe', style: TextStyle(color: Colors.white)),
+        appBar: AppBar(title: Text(l10n.storage)),
+        body: Center(
+          child: Text(l10n.emptyContainer, style: const TextStyle(color: Colors.white)),
         ),
       );
     }
 
     final parentName = _path.length > 1
         ? _path[_path.length - 2].name
-        : (_node!.isPlace ? 'Principal' : 'Raíz');
+        : (_node!.isPlace ? l10n.place : l10n.rootLevel);
 
     final subStorages = _node!.subStorages;
     final directItems = _node!.directItems;
@@ -265,12 +269,12 @@ class _StorageDetailViewState extends State<StorageDetailView> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(_node!.isPlace ? 'Place' : 'Storage'),
+        title: Text(_node!.isPlace ? l10n.place : l10n.storage),
         actions: [
           if (_node!.isPlace)
             IconButton(
               icon: const Icon(Icons.file_upload_outlined),
-              tooltip: 'Exportar Lugar a JSON',
+              tooltip: l10n.exportPlaceTab,
               onPressed: _exportThisPlace,
             ),
         ],
@@ -299,19 +303,19 @@ class _StorageDetailViewState extends State<StorageDetailView> {
                 FigmaActionCircle(
                   icon: _node!.isFavorite ? Icons.favorite : Icons.favorite_border,
                   iconColor: _node!.isFavorite ? Colors.redAccent : Colors.white,
-                  tooltip: 'Favorito',
+                  tooltip: l10n.favourites,
                   onTap: _toggleFavorite,
                 ),
                 const SizedBox(width: 16),
                 FigmaActionCircle(
                   icon: Icons.edit_outlined,
-                  tooltip: 'Editar',
+                  tooltip: l10n.edit,
                   onTap: _editNode,
                 ),
                 const SizedBox(width: 16),
                 FigmaActionCircle(
                   icon: Icons.drive_file_move_outlined,
-                  tooltip: 'Mover',
+                  tooltip: l10n.move,
                   onTap: _moveNode,
                 ),
                 const SizedBox(width: 16),
@@ -319,7 +323,7 @@ class _StorageDetailViewState extends State<StorageDetailView> {
                   icon: Icons.delete_outline,
                   iconColor: Colors.redAccent,
                   backgroundColor: AppTheme.searchBarBg,
-                  tooltip: 'Eliminar',
+                  tooltip: l10n.delete,
                   onTap: _deleteNode,
                 ),
               ],
@@ -354,12 +358,12 @@ class _StorageDetailViewState extends State<StorageDetailView> {
               const SizedBox(height: 20),
             ],
 
-            // SECCIÓN: STORAGES (Baldas, Cajones, Cajas...)
+            // SECCIÓN: STORAGES
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Storages (${subStorages.length})',
+                  '${l10n.storage} (${subStorages.length})',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -369,7 +373,7 @@ class _StorageDetailViewState extends State<StorageDetailView> {
                 TextButton.icon(
                   onPressed: () => _addNewChild(NodeType.storage),
                   icon: const Icon(Icons.add, size: 18, color: AppTheme.lavenderText),
-                  label: const Text('Add', style: TextStyle(color: AppTheme.lavenderText)),
+                  label: Text(l10n.add, style: const TextStyle(color: AppTheme.lavenderText)),
                 ),
               ],
             ),
@@ -383,10 +387,10 @@ class _StorageDetailViewState extends State<StorageDetailView> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.white12),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
-                    'No hay sub-almacenes (cajones, baldas, cajas)',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                    l10n.emptyContainer,
+                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
                   ),
                 ),
               )
@@ -414,7 +418,7 @@ class _StorageDetailViewState extends State<StorageDetailView> {
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       subtitle: Text(
-                        '${s.totalNestedItemsCount} objetos • ${s.subStorages.length} sub-contenedores',
+                        '${l10n.objectsCount(s.totalNestedItemsCount)} • ${l10n.storagesCount(s.subStorages.length)}',
                         style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
                       ),
                       trailing: const Icon(Icons.chevron_right, color: AppTheme.textMuted),
@@ -439,7 +443,7 @@ class _StorageDetailViewState extends State<StorageDetailView> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Items (${directItems.length})',
+                  '${l10n.object} (${directItems.length})',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -449,7 +453,7 @@ class _StorageDetailViewState extends State<StorageDetailView> {
                 TextButton.icon(
                   onPressed: () => _addNewChild(NodeType.item),
                   icon: const Icon(Icons.add, size: 18, color: AppTheme.lavenderText),
-                  label: const Text('Add', style: TextStyle(color: AppTheme.lavenderText)),
+                  label: Text(l10n.add, style: const TextStyle(color: AppTheme.lavenderText)),
                 ),
               ],
             ),
@@ -463,10 +467,10 @@ class _StorageDetailViewState extends State<StorageDetailView> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.white12),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
-                    'No hay objetos directamente aquí',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                    l10n.emptyContainer,
+                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
                   ),
                 ),
               )
@@ -494,7 +498,7 @@ class _StorageDetailViewState extends State<StorageDetailView> {
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       subtitle: Text(
-                        it.description.isNotEmpty ? it.description : 'Cantidad: ${it.quantity}',
+                        it.description.isNotEmpty ? it.description : '${l10n.quantity}: ${it.quantity}',
                         style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/inventory_node.dart';
 import '../../services/image_storage_service.dart';
 import '../../services/inventory_storage_service.dart';
@@ -106,14 +107,11 @@ class _NodeEditDialogState extends State<NodeEditDialog> {
     final tree = await _service.loadTree();
     final options = <Map<String, String>>[];
 
-    // Añadir opción de raíz (sin padre)
-    options.add({'id': '', 'name': '🏠 Raíz (Lugar o mueble principal)'});
+    options.add({'id': '', 'name': '🏠 Root'});
 
     void traverse(InventoryNode n, String prefix) {
-      // Un nodo no puede ser su propio padre
       if (widget.nodeToEdit != null && n.id == widget.nodeToEdit!.id) return;
 
-      // Solo places y storages pueden contener cosas
       if (n.isPlace || n.isStorage) {
         final icon = n.isPlace ? '📍' : '📦';
         options.add({
@@ -146,7 +144,7 @@ class _NodeEditDialogState extends State<NodeEditDialog> {
         : _selectedParentId;
 
     if (widget.nodeToEdit == null) {
-      // Crear nuevo
+      // Create new
       final newNode = InventoryNode(
         name: _nameController.text.trim(),
         description: _descController.text.trim(),
@@ -157,7 +155,7 @@ class _NodeEditDialogState extends State<NodeEditDialog> {
       );
       await _service.addNode(newNode, targetParentId: parentId);
     } else {
-      // Editar existente
+      // Edit existing
       final node = widget.nodeToEdit!;
       node.name = _nameController.text.trim();
       node.description = _descController.text.trim();
@@ -177,6 +175,7 @@ class _NodeEditDialogState extends State<NodeEditDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isEditing = widget.nodeToEdit != null;
 
     return SingleChildScrollView(
@@ -192,8 +191,8 @@ class _NodeEditDialogState extends State<NodeEditDialog> {
               children: [
                 Text(
                   isEditing
-                      ? 'Editar ${_typeName(_selectedType)}'
-                      : 'Añadir nuevo elemento',
+                      ? l10n.editTitle(_selectedType.name)
+                      : l10n.newTitle(_selectedType.name),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -211,21 +210,21 @@ class _NodeEditDialogState extends State<NodeEditDialog> {
             // Selector de tipo (solo si es nuevo)
             if (!isEditing) ...[
               SegmentedButton<NodeType>(
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: NodeType.place,
-                    label: Text('Lugar'),
-                    icon: Icon(Icons.room),
+                    label: Text(l10n.place),
+                    icon: const Icon(Icons.room),
                   ),
                   ButtonSegment(
                     value: NodeType.storage,
-                    label: Text('Almacén'),
-                    icon: Icon(Icons.inventory_2),
+                    label: Text(l10n.storage),
+                    icon: const Icon(Icons.inventory_2),
                   ),
                   ButtonSegment(
                     value: NodeType.item,
-                    label: Text('Objeto'),
-                    icon: Icon(Icons.category),
+                    label: Text(l10n.object),
+                    icon: const Icon(Icons.category),
                   ),
                 ],
                 selected: {_selectedType},
@@ -243,17 +242,12 @@ class _NodeEditDialogState extends State<NodeEditDialog> {
               controller: _nameController,
               autofocus: !isEditing,
               decoration: InputDecoration(
-                labelText: 'Nombre',
+                labelText: l10n.nameLabel,
                 labelStyle: const TextStyle(color: AppTheme.textMuted),
-                hintText: _selectedType == NodeType.place
-                    ? 'Ej: Habitación, Garaje, Cocina'
-                    : _selectedType == NodeType.storage
-                        ? 'Ej: Armario, Balda 2, Caja roja'
-                        : 'Ej: Bastoncillos, Calcetines, Hilo',
               ),
               validator: (v) {
                 if (v == null || v.trim().isEmpty) {
-                  return 'El nombre es obligatorio';
+                  return l10n.nameRequired;
                 }
                 return null;
               },
@@ -267,16 +261,17 @@ class _NodeEditDialogState extends State<NodeEditDialog> {
               else
                 DropdownButtonFormField<String>(
                   initialValue: _selectedParentId ?? '',
-                  decoration: const InputDecoration(
-                    labelText: 'Ubicación / Contenedor padre',
-                    labelStyle: TextStyle(color: AppTheme.textMuted),
+                  decoration: InputDecoration(
+                    labelText: l10n.parentStorageLabel,
+                    labelStyle: const TextStyle(color: AppTheme.textMuted),
                   ),
                   dropdownColor: AppTheme.darkCard,
                   items: _storageOptions.map((opt) {
+                    final isRoot = opt['id'] == '';
                     return DropdownMenuItem<String>(
                       value: opt['id'],
                       child: Text(
-                        opt['name']!,
+                        isRoot ? '🏠 ${l10n.rootLevel}' : opt['name']!,
                         style: const TextStyle(fontSize: 14),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -295,9 +290,9 @@ class _NodeEditDialogState extends State<NodeEditDialog> {
             if (_selectedType == NodeType.item) ...[
               Row(
                 children: [
-                  const Text(
-                    'Cantidad:',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  Text(
+                    '${l10n.quantity}:',
+                    style: const TextStyle(fontSize: 16, color: Colors.white),
                   ),
                   const Spacer(),
                   IconButton(
@@ -331,12 +326,13 @@ class _NodeEditDialogState extends State<NodeEditDialog> {
             TextFormField(
               controller: _descController,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Notas / Descripción',
-                labelStyle: TextStyle(color: AppTheme.textMuted),
-                hintText: 'Detalles, color, especificaciones...',
+              decoration: InputDecoration(
+                labelText: l10n.descriptionLabel,
+                labelStyle: const TextStyle(color: AppTheme.textMuted),
               ),
             ),
+            const SizedBox(height: 16),
+
             // Selector / Vista previa de imagen
             InkWell(
               borderRadius: BorderRadius.circular(16),
@@ -377,7 +373,7 @@ class _NodeEditDialogState extends State<NodeEditDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _imagePath != null ? 'Foto adjuntada' : 'Añadir imagen',
+                            l10n.coverImage,
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -387,8 +383,8 @@ class _NodeEditDialogState extends State<NodeEditDialog> {
                           const SizedBox(height: 2),
                           Text(
                             _imagePath != null
-                                ? 'Toca para cambiar o eliminar'
-                                : 'Tomar foto o elegir de la galería',
+                                ? l10n.changePhoto
+                                : l10n.chooseFromGallery,
                             style: const TextStyle(
                               color: AppTheme.textMuted,
                               fontSize: 12,
@@ -420,7 +416,7 @@ class _NodeEditDialogState extends State<NodeEditDialog> {
                 ),
               ),
               child: Text(
-                isEditing ? 'Guardar Cambios' : 'Crear ${_typeName(_selectedType)}',
+                isEditing ? l10n.save : l10n.add,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
@@ -428,16 +424,5 @@ class _NodeEditDialogState extends State<NodeEditDialog> {
         ),
       ),
     );
-  }
-
-  String _typeName(NodeType t) {
-    switch (t) {
-      case NodeType.place:
-        return 'Lugar';
-      case NodeType.storage:
-        return 'Almacén / Mueble';
-      case NodeType.item:
-        return 'Objeto';
-    }
   }
 }

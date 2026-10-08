@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/inventory_node.dart';
 import '../../services/image_storage_service.dart';
 import '../../services/inventory_storage_service.dart';
@@ -84,6 +85,7 @@ class _ObjectDetailViewState extends State<ObjectDetailView> {
 
   Future<void> _moveNode() async {
     if (_node == null) return;
+    final l10n = AppLocalizations.of(context);
     final tree = await _service.loadTree();
     final storages = <InventoryNode>[];
 
@@ -106,7 +108,7 @@ class _ObjectDetailViewState extends State<ObjectDetailView> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.darkSurface,
-        title: const Text('Mover objeto a...', style: TextStyle(color: Colors.white)),
+        title: Text(l10n.selectContainer, style: const TextStyle(color: Colors.white)),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -128,7 +130,7 @@ class _ObjectDetailViewState extends State<ObjectDetailView> {
                   ),
                 ),
                 subtitle: Text(
-                  s.isPlace ? 'Lugar' : 'Almacén',
+                  s.isPlace ? l10n.place : l10n.storage,
                   style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
                 ),
                 trailing: isCurrent ? const Icon(Icons.check, color: AppTheme.lavenderText) : null,
@@ -140,7 +142,7 @@ class _ObjectDetailViewState extends State<ObjectDetailView> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar', style: TextStyle(color: AppTheme.lavenderText)),
+            child: Text(l10n.cancel, style: const TextStyle(color: AppTheme.lavenderText)),
           ),
         ],
       ),
@@ -154,23 +156,24 @@ class _ObjectDetailViewState extends State<ObjectDetailView> {
 
   Future<void> _deleteNode() async {
     if (_node == null) return;
+    final l10n = AppLocalizations.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.darkSurface,
-        title: const Text('¿Eliminar objeto?', style: TextStyle(color: Colors.white)),
+        title: Text(l10n.deleteConfirmTitle, style: const TextStyle(color: Colors.white)),
         content: Text(
-          'Se eliminará "${_node!.name}". Esta acción no se puede deshacer.',
+          l10n.deleteConfirmMessage(_node!.name),
           style: const TextStyle(color: AppTheme.textMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar', style: TextStyle(color: AppTheme.lavenderText)),
+            child: Text(l10n.cancel, style: const TextStyle(color: AppTheme.lavenderText)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Eliminar', style: TextStyle(color: Colors.redAccent)),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -212,6 +215,8 @@ class _ObjectDetailViewState extends State<ObjectDetailView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     if (_isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -220,17 +225,16 @@ class _ObjectDetailViewState extends State<ObjectDetailView> {
 
     if (_node == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Objeto')),
-        body: const Center(
-          child: Text('El objeto ya no existe', style: TextStyle(color: Colors.white)),
+        appBar: AppBar(title: Text(l10n.object)),
+        body: Center(
+          child: Text(l10n.emptyContainer, style: const TextStyle(color: Colors.white)),
         ),
       );
     }
 
-    // Ruta padre excluyendo el objeto mismo
     final parentPath = _path.length > 1
         ? _path.sublist(0, _path.length - 1).map((n) => n.name).join(' > ')
-        : 'Sin ubicación';
+        : l10n.rootLevel;
 
     return Scaffold(
       appBar: AppBar(
@@ -238,7 +242,7 @@ class _ObjectDetailViewState extends State<ObjectDetailView> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Object'),
+        title: Text(l10n.object),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -254,26 +258,26 @@ class _ObjectDetailViewState extends State<ObjectDetailView> {
             ),
             const SizedBox(height: 20),
 
-            // Botones circulares de acción (Favorito, Editar, Mover, Borrar)
+            // Botones circulares de acción
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 FigmaActionCircle(
                   icon: _node!.isFavorite ? Icons.favorite : Icons.favorite_border,
                   iconColor: _node!.isFavorite ? Colors.redAccent : Colors.white,
-                  tooltip: 'Favorito',
+                  tooltip: l10n.favourites,
                   onTap: _toggleFavorite,
                 ),
                 const SizedBox(width: 16),
                 FigmaActionCircle(
                   icon: Icons.edit_outlined,
-                  tooltip: 'Editar',
+                  tooltip: l10n.edit,
                   onTap: _editNode,
                 ),
                 const SizedBox(width: 16),
                 FigmaActionCircle(
                   icon: Icons.drive_file_move_outlined,
-                  tooltip: 'Mover',
+                  tooltip: l10n.move,
                   onTap: _moveNode,
                 ),
                 const SizedBox(width: 16),
@@ -281,7 +285,7 @@ class _ObjectDetailViewState extends State<ObjectDetailView> {
                   icon: Icons.delete_outline,
                   iconColor: Colors.redAccent,
                   backgroundColor: AppTheme.searchBarBg,
-                  tooltip: 'Eliminar',
+                  tooltip: l10n.delete,
                   onTap: _deleteNode,
                 ),
               ],
@@ -313,9 +317,9 @@ class _ObjectDetailViewState extends State<ObjectDetailView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Cantidad disponible',
-                    style: TextStyle(
+                  Text(
+                    l10n.quantity,
+                    style: const TextStyle(
                       color: AppTheme.textMuted,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -366,9 +370,9 @@ class _ObjectDetailViewState extends State<ObjectDetailView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Descripción / Notas',
-                    style: TextStyle(
+                  Text(
+                    l10n.notes,
+                    style: const TextStyle(
                       color: AppTheme.textMuted,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -378,7 +382,7 @@ class _ObjectDetailViewState extends State<ObjectDetailView> {
                   Text(
                     _node!.description.isNotEmpty
                         ? _node!.description
-                        : 'Sin notas añadidas para este objeto.',
+                        : l10n.noNotes,
                     style: TextStyle(
                       color: _node!.description.isNotEmpty
                           ? Colors.white
@@ -394,9 +398,9 @@ class _ObjectDetailViewState extends State<ObjectDetailView> {
 
             // Migas de pan completas
             if (_path.isNotEmpty) ...[
-              const Text(
-                'Ruta completa en el árbol:',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+              Text(
+                '${l10n.locationPath}:',
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
               ),
               const SizedBox(height: 8),
               BreadcrumbBar(

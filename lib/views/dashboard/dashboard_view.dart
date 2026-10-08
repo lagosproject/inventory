@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/inventory_node.dart';
 import '../../services/inventory_storage_service.dart';
 import '../../theme/app_theme.dart';
@@ -97,6 +98,7 @@ class _DashboardViewState extends State<DashboardView> {
   }
 
   Future<void> _showAddSpeedDial() async {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: AppTheme.darkSurface,
@@ -109,9 +111,9 @@ class _DashboardViewState extends State<DashboardView> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '¿Qué deseas añadir?',
-                style: TextStyle(
+              Text(
+                l10n.add,
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -127,10 +129,10 @@ class _DashboardViewState extends State<DashboardView> {
                   ),
                   child: const Icon(Icons.room, color: AppTheme.lavenderText),
                 ),
-                title: const Text('Lugar (Habitación, Cocina, Taller...)',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: const Text('Raíz del árbol de almacenamiento',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                title: Text(l10n.newTitle('place'),
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text(l10n.place,
+                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
                 onTap: () async {
                   Navigator.pop(ctx);
                   final changed = await NodeEditDialog.show(
@@ -149,10 +151,10 @@ class _DashboardViewState extends State<DashboardView> {
                   ),
                   child: const Icon(Icons.inventory_2, color: AppTheme.lavenderText),
                 ),
-                title: const Text('Almacén (Armario, Balda, Cajón, Caja...)',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: const Text('Contenedor para colocar objetos o sub-cajas',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                title: Text(l10n.newTitle('storage'),
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text(l10n.storage,
+                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
                 onTap: () async {
                   Navigator.pop(ctx);
                   final changed = await NodeEditDialog.show(
@@ -171,10 +173,10 @@ class _DashboardViewState extends State<DashboardView> {
                   ),
                   child: const Icon(Icons.category, color: AppTheme.lavenderText),
                 ),
-                title: const Text('Objeto (Hilo, Calcetines, Bastoncillos...)',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: const Text('Artículo con cantidad guardado en un contenedor',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                title: Text(l10n.newTitle('item'),
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text(l10n.object,
+                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
                 onTap: () async {
                   Navigator.pop(ctx);
                   final changed = await NodeEditDialog.show(
@@ -208,6 +210,8 @@ class _DashboardViewState extends State<DashboardView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       body: SafeArea(
         child: _isLoading
@@ -218,7 +222,7 @@ class _DashboardViewState extends State<DashboardView> {
                 backgroundColor: AppTheme.darkCard,
                 child: CustomScrollView(
                   slivers: [
-                    // Header con SearchBar y botón JSON
+                    // Header con SearchBar, selector de idioma y botón JSON
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
@@ -229,12 +233,12 @@ class _DashboardViewState extends State<DashboardView> {
                                 controller: _searchController,
                                 onChanged: _onSearchChanged,
                                 onClear: _clearSearch,
-                                hintText: 'Search in Inventory...',
+                                hintText: l10n.searchPlaceholder,
                               ),
                             ),
                             const SizedBox(width: 12),
                             IconButton(
-                              tooltip: 'Importar / Exportar JSON',
+                              tooltip: l10n.syncTooltip,
                               icon: Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
@@ -251,16 +255,16 @@ class _DashboardViewState extends State<DashboardView> {
                     ),
 
                     if (_isSearching)
-                      _buildSearchResults()
+                      _buildSearchResults(l10n)
                     else ...[
                       // SECCIÓN: FAVOURITES
-                      if (_favorites.isNotEmpty) _buildFavoritesSection(),
+                      if (_favorites.isNotEmpty) _buildFavoritesSection(l10n),
 
                       // SECCIÓN: PLACES
-                      _buildPlacesSection(),
+                      _buildPlacesSection(l10n),
 
                       // SECCIÓN: RECENTLY VIEWED
-                      if (_recentlyViewed.isNotEmpty) _buildRecentlyViewedSection(),
+                      if (_recentlyViewed.isNotEmpty) _buildRecentlyViewedSection(l10n),
 
                       const SliverToBoxAdapter(
                         child: SizedBox(height: 80),
@@ -272,13 +276,13 @@ class _DashboardViewState extends State<DashboardView> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddSpeedDial,
-        tooltip: 'Añadir elemento',
+        tooltip: l10n.add,
         child: const Icon(Icons.add, size: 28),
       ),
     );
   }
 
-  Widget _buildSearchResults() {
+  Widget _buildSearchResults(AppLocalizations l10n) {
     if (_searchResults.isEmpty) {
       return SliverToBoxAdapter(
         child: Padding(
@@ -289,7 +293,7 @@ class _DashboardViewState extends State<DashboardView> {
                 const Icon(Icons.search_off, size: 48, color: AppTheme.textMuted),
                 const SizedBox(height: 12),
                 Text(
-                  'No se encontraron resultados para "${_searchController.text}"',
+                  '${l10n.noSearchResults}: "${_searchController.text}"',
                   style: const TextStyle(color: AppTheme.textMuted, fontSize: 15),
                 ),
               ],
@@ -350,16 +354,16 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  Widget _buildFavoritesSection() {
+  Widget _buildFavoritesSection(AppLocalizations l10n) {
     return SliverToBoxAdapter(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
             child: Text(
-              'Favourites',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+              l10n.favourites,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
             ),
           ),
           SizedBox(
@@ -407,7 +411,9 @@ class _DashboardViewState extends State<DashboardView> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          fav.isItem ? 'Cant: ${fav.quantity}' : '${fav.totalNestedItemsCount} objetos',
+                          fav.isItem
+                              ? '${l10n.quantity}: ${fav.quantity}'
+                              : l10n.objectsCount(fav.totalNestedItemsCount),
                           style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
                         ),
                       ],
@@ -422,7 +428,7 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  Widget _buildPlacesSection() {
+  Widget _buildPlacesSection(AppLocalizations l10n) {
     final places = _tree.where((n) => n.isPlace).toList();
     final storagesInRoot = _tree.where((n) => !n.isPlace).toList();
 
@@ -435,9 +441,9 @@ class _DashboardViewState extends State<DashboardView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Places',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                Text(
+                  l10n.places,
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 TextButton.icon(
                   onPressed: () async {
@@ -448,7 +454,7 @@ class _DashboardViewState extends State<DashboardView> {
                     if (changed == true) _loadData();
                   },
                   icon: const Icon(Icons.add, size: 18, color: AppTheme.lavenderText),
-                  label: const Text('Add Place', style: TextStyle(color: AppTheme.lavenderText)),
+                  label: Text(l10n.addPlace, style: const TextStyle(color: AppTheme.lavenderText)),
                 ),
               ],
             ),
@@ -461,11 +467,11 @@ class _DashboardViewState extends State<DashboardView> {
                   color: AppTheme.darkCard,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
-                    'No hay lugares ni almacenes creados.\nPulsa + para añadir el primero.',
+                    l10n.noPlaces,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppTheme.textMuted),
+                    style: const TextStyle(color: AppTheme.textMuted),
                   ),
                 ),
               )
@@ -495,7 +501,7 @@ class _DashboardViewState extends State<DashboardView> {
                     ),
                     title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
                     subtitle: Text(
-                      '${p.children.length} almacenes • ${p.totalNestedItemsCount} objetos',
+                      '${l10n.storagesCount(p.children.length)} • ${l10n.objectsCount(p.totalNestedItemsCount)}',
                       style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
                     ),
                     trailing: Row(
@@ -503,7 +509,7 @@ class _DashboardViewState extends State<DashboardView> {
                       children: [
                         IconButton(
                           icon: const Icon(Icons.file_upload_outlined, size: 20),
-                          tooltip: 'Exportar Lugar',
+                          tooltip: l10n.exportPlaceTab,
                           color: AppTheme.lavenderText,
                           onPressed: () => _exportPlace(p.id),
                         ),
@@ -518,9 +524,9 @@ class _DashboardViewState extends State<DashboardView> {
               // Storages sueltos en la raíz si los hubiera
               if (storagesInRoot.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                const Text(
-                  'Almacenes en la raíz',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.textMuted),
+                Text(
+                  l10n.storage,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.textMuted),
                 ),
                 const SizedBox(height: 8),
                 for (final s in storagesInRoot) ...[
@@ -540,7 +546,7 @@ class _DashboardViewState extends State<DashboardView> {
                       ),
                       title: Text(s.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: Text(
-                        '${s.totalNestedItemsCount} objetos',
+                        l10n.objectsCount(s.totalNestedItemsCount),
                         style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
                       ),
                       trailing: const Icon(Icons.chevron_right, color: AppTheme.textMuted),
@@ -556,16 +562,16 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  Widget _buildRecentlyViewedSection() {
+  Widget _buildRecentlyViewedSection(AppLocalizations l10n) {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Recently viewed',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+            Text(
+              l10n.recentlyViewed,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             const SizedBox(height: 12),
             for (final r in _recentlyViewed) ...[
@@ -584,7 +590,7 @@ class _DashboardViewState extends State<DashboardView> {
                   ),
                   title: Text(r.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: Text(
-                    r.isPlace ? 'Lugar' : r.isStorage ? 'Almacén' : 'Objeto (x${r.quantity})',
+                    r.isPlace ? l10n.place : r.isStorage ? l10n.storage : '${l10n.object} (x${r.quantity})',
                     style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
                   ),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.textMuted),

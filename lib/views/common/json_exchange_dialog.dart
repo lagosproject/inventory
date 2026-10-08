@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/inventory_node.dart';
 import '../../services/inventory_storage_service.dart';
 import '../../theme/app_theme.dart';
@@ -86,9 +87,10 @@ class _PlaceJsonExchangeDialogState extends State<PlaceJsonExchangeDialog>
   }
 
   Future<void> _handleImport() async {
+    final l10n = AppLocalizations.of(context);
     final text = _importController.text.trim();
     if (text.isEmpty) {
-      setState(() => _errorMessage = 'Por favor, pega el JSON de un Lugar');
+      setState(() => _errorMessage = l10n.invalidJson);
       return;
     }
 
@@ -103,7 +105,7 @@ class _PlaceJsonExchangeDialogState extends State<PlaceJsonExchangeDialog>
     if (importedPlace != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('¡Lugar "${importedPlace.name}" importado con éxito!'),
+          content: Text('${l10n.importSuccess} ("${importedPlace.name}")'),
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 3),
         ),
@@ -112,13 +114,15 @@ class _PlaceJsonExchangeDialogState extends State<PlaceJsonExchangeDialog>
     } else {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'El JSON no corresponde a un Lugar válido o está mal formateado.';
+        _errorMessage = l10n.invalidJson;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Dialog(
       backgroundColor: AppTheme.darkSurface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -132,17 +136,17 @@ class _PlaceJsonExchangeDialogState extends State<PlaceJsonExchangeDialog>
               labelColor: AppTheme.lavenderText,
               unselectedLabelColor: AppTheme.textMuted,
               indicatorColor: AppTheme.lavenderText,
-              tabs: const [
-                Tab(icon: Icon(Icons.file_upload_outlined), text: 'Exportar Lugar'),
-                Tab(icon: Icon(Icons.file_download_outlined), text: 'Importar Lugar'),
+              tabs: [
+                Tab(icon: const Icon(Icons.file_upload_outlined), text: l10n.exportPlaceTab),
+                Tab(icon: const Icon(Icons.file_download_outlined), text: l10n.importPlaceTab),
               ],
             ),
             Expanded(
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildExportTab(),
-                  _buildImportTab(),
+                  _buildExportTab(l10n),
+                  _buildImportTab(l10n),
                 ],
               ),
             ),
@@ -152,16 +156,16 @@ class _PlaceJsonExchangeDialogState extends State<PlaceJsonExchangeDialog>
     );
   }
 
-  Widget _buildExportTab() {
+  Widget _buildExportTab(AppLocalizations l10n) {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
     if (_places.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'No hay lugares creados para exportar.',
-          style: TextStyle(color: AppTheme.textMuted),
+          l10n.noPlaces,
+          style: const TextStyle(color: AppTheme.textMuted),
         ),
       );
     }
@@ -174,10 +178,10 @@ class _PlaceJsonExchangeDialogState extends State<PlaceJsonExchangeDialog>
           DropdownButtonFormField<String>(
             initialValue: _selectedPlaceId,
             dropdownColor: AppTheme.darkCard,
-            decoration: const InputDecoration(
-              labelText: 'Lugar a exportar',
-              labelStyle: TextStyle(color: AppTheme.textMuted, fontSize: 13),
-              contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: InputDecoration(
+              labelText: l10n.placeToExport,
+              labelStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             ),
             items: _places.map((p) {
               return DropdownMenuItem<String>(
@@ -192,9 +196,9 @@ class _PlaceJsonExchangeDialogState extends State<PlaceJsonExchangeDialog>
             onChanged: _onPlaceSelected,
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Contenido JSON listo para compartir (sin fotos pesadas, 100% transferible):',
-            style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+          Text(
+            l10n.exportNotice,
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
           ),
           const SizedBox(height: 8),
           Expanded(
@@ -225,10 +229,10 @@ class _PlaceJsonExchangeDialogState extends State<PlaceJsonExchangeDialog>
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: _exportedJson));
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('¡JSON del lugar copiado al portapapeles!'),
+                      SnackBar(
+                        content: Text(l10n.copiedToClipboard),
                         backgroundColor: Colors.green,
-                        duration: Duration(seconds: 2),
+                        duration: const Duration(seconds: 2),
                       ),
                     );
                   },
@@ -239,13 +243,13 @@ class _PlaceJsonExchangeDialogState extends State<PlaceJsonExchangeDialog>
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: const Icon(Icons.copy, size: 18),
-                  label: const Text('Copiar JSON'),
+                  label: Text(l10n.copyJson),
                 ),
               ),
               const SizedBox(width: 8),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cerrar', style: TextStyle(color: AppTheme.lavenderText)),
+                child: Text(l10n.close, style: const TextStyle(color: AppTheme.lavenderText)),
               ),
             ],
           ),
@@ -254,15 +258,15 @@ class _PlaceJsonExchangeDialogState extends State<PlaceJsonExchangeDialog>
     );
   }
 
-  Widget _buildImportTab() {
+  Widget _buildImportTab(AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Pega el JSON de un Lugar para añadirlo a tu inventario sin modificar tus otros lugares:',
-            style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+          Text(
+            l10n.importNotice,
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
           ),
           const SizedBox(height: 10),
           Expanded(
@@ -298,7 +302,7 @@ class _PlaceJsonExchangeDialogState extends State<PlaceJsonExchangeDialog>
                   }
                 },
                 icon: const Icon(Icons.paste, size: 18, color: AppTheme.lavenderText),
-                label: const Text('Pegar', style: TextStyle(color: AppTheme.lavenderText)),
+                label: Text(l10n.paste, style: const TextStyle(color: AppTheme.lavenderText)),
               ),
               const Spacer(),
               ElevatedButton.icon(
@@ -310,7 +314,7 @@ class _PlaceJsonExchangeDialogState extends State<PlaceJsonExchangeDialog>
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Añadir Lugar'),
+                label: Text(l10n.addPlace),
               ),
             ],
           ),
